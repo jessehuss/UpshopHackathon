@@ -16,17 +16,13 @@ use OpenAI\Laravel\Facades\OpenAI;
 class OpenAIService
 {
     /**
-     * Simple text generation using the Chat Completions API.
+     * Build the OpenAI Chat request body by applying defaults and system messages.
      *
-     * @param array{model:string,messages:array<int,array<string,mixed>>,temperature?:float,max_tokens?:int,top_p?:float} $payload
+     * @param array{messages:array<int,array<string,mixed>>,model?:string,temperature?:float,max_tokens?:int,top_p?:float,system_messages_override?:array<int,string>} $payload
      * @return array<string,mixed>
      */
-    public function generateChat(array $payload): array
+    private function buildRequestBody(array $payload): array
     {
-        if (!isset($payload['messages'])) {
-            throw new \InvalidArgumentException('The payload must include messages.');
-        }
-
         $configDefaults = [
             'model' => config('openai.default_model'),
             'temperature' => config('openai.default_temperature'),
@@ -34,7 +30,6 @@ class OpenAIService
             'top_p' => config('openai.default_top_p'),
         ];
 
-        // Prepend configurable system messages for consistent context.
         $overrideSystemMessages = $payload['system_messages_override'] ?? null;
         $baseSystemMessages = is_array($overrideSystemMessages)
             ? $overrideSystemMessages
@@ -47,17 +42,51 @@ class OpenAIService
 
         $messages = array_values(array_merge($systemPrimers, $payload['messages']));
 
-        $body = [
+        return [
             'model' => $payload['model'] ?? $configDefaults['model'],
             'messages' => $messages,
             'temperature' => $payload['temperature'] ?? $configDefaults['temperature'],
             'max_tokens' => $payload['max_tokens'] ?? $configDefaults['max_tokens'],
             'top_p' => $payload['top_p'] ?? $configDefaults['top_p'],
         ];
+    }
+    /**
+     * Simple text generation using the Chat Completions API.
+     *
+     * @param array{model:string,messages:array<int,array<string,mixed>>,temperature?:float,max_tokens?:int,top_p?:float} $payload
+     * @return array<string,mixed>
+     */
+    public function generateChat(array $payload): array
+    {
+        if (!isset($payload['messages'])) {
+            throw new \InvalidArgumentException('The payload must include messages.');
+        }
+
+        $body = $this->buildRequestBody($payload);
 
         $response = OpenAI::chat()->create($body);
 
         return $response->toArray();
+    }
+
+    /**
+     * Stream text generation using the Chat Completions API.
+     *
+     * @param array{messages:array<int,array<string,mixed>>,model?:string,temperature?:float,max_tokens?:int,top_p?:float,system_messages_override?:array<int,string>} $payload
+     * @return \Traversable<int, mixed>
+     */
+    public function streamChat(array $payload): \Traversable
+    {
+        if (!isset($payload['messages'])) {
+            throw new \InvalidArgumentException('The payload must include messages.');
+        }
+
+        $body = $this->buildRequestBody($payload);
+
+        $stream = OpenAI::chat()->createStreamed($body);
+        foreach ($stream as $response) {
+            yield $response;
+        }
     }
 }
 
