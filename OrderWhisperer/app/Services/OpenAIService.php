@@ -23,18 +23,39 @@ class OpenAIService
      */
     public function generateChat(array $payload): array
     {
-        // Guard required fields
-        if (!isset($payload['model']) || !isset($payload['messages'])) {
-            throw new \InvalidArgumentException('The payload must include model and messages.');
+        if (!isset($payload['messages'])) {
+            throw new \InvalidArgumentException('The payload must include messages.');
         }
 
-        $response = OpenAI::chat()->create([
-            'model' => $payload['model'],
-            'messages' => $payload['messages'],
-            'temperature' => $payload['temperature'] ?? null,
-            'max_tokens' => $payload['max_tokens'] ?? null,
-            'top_p' => $payload['top_p'] ?? null,
-        ]);
+        $configDefaults = [
+            'model' => config('openai.default_model'),
+            'temperature' => config('openai.default_temperature'),
+            'max_tokens' => config('openai.default_max_tokens'),
+            'top_p' => config('openai.default_top_p'),
+        ];
+
+        // Prepend configurable system messages for consistent context.
+        $overrideSystemMessages = $payload['system_messages_override'] ?? null;
+        $baseSystemMessages = is_array($overrideSystemMessages)
+            ? $overrideSystemMessages
+            : (array) config('openai.system_messages', []);
+
+        $systemPrimers = array_map(
+            fn (string $text) => ['role' => 'system', 'content' => $text],
+            $baseSystemMessages
+        );
+
+        $messages = array_values(array_merge($systemPrimers, $payload['messages']));
+
+        $body = [
+            'model' => $payload['model'] ?? $configDefaults['model'],
+            'messages' => $messages,
+            'temperature' => $payload['temperature'] ?? $configDefaults['temperature'],
+            'max_tokens' => $payload['max_tokens'] ?? $configDefaults['max_tokens'],
+            'top_p' => $payload['top_p'] ?? $configDefaults['top_p'],
+        ];
+
+        $response = OpenAI::chat()->create($body);
 
         return $response->toArray();
     }
