@@ -26,7 +26,7 @@ class OpenAIService
         $configDefaults = [
             'model' => config('openai.default_model'),
             'temperature' => config('openai.default_temperature'),
-            'max_completion_tokens' => config('openai.default_max_completion_tokens'),
+            'max_tokens' => config('openai.default_max_tokens'),
             'top_p' => config('openai.default_top_p'),
         ];
 
@@ -42,32 +42,13 @@ class OpenAIService
 
         $messages = array_values(array_merge($systemPrimers, $payload['messages']));
 
-        $maxCompletionTokens = $payload['max_completion_tokens']
-            ?? $payload['max_tokens']
-            ?? $configDefaults['max_completion_tokens'];
-
-        $body = [
+        return [
             'model' => $payload['model'] ?? $configDefaults['model'],
             'messages' => $messages,
-            // Some models only accept the default temperature (1). If a custom
-            // temperature is provided and equals 1 (default), keep it; otherwise omit.
+            'temperature' => $payload['temperature'] ?? $configDefaults['temperature'],
+            'max_tokens' => $payload['max_tokens'] ?? $configDefaults['max_tokens'],
+            'top_p' => $payload['top_p'] ?? $configDefaults['top_p'],
         ];
-
-        $temperature = $payload['temperature'] ?? $configDefaults['temperature'];
-        if ($temperature === 1 || $temperature === 1.0 || $temperature === '1' || $temperature === '1.0') {
-            $body['temperature'] = 1;
-        }
-
-        $topP = $payload['top_p'] ?? $configDefaults['top_p'];
-        if ($topP !== null) {
-            $body['top_p'] = $topP;
-        }
-
-        if ($maxCompletionTokens !== null) {
-            $body['max_completion_tokens'] = $maxCompletionTokens;
-        }
-
-        return $body;
     }
     /**
      * Simple text generation using the Chat Completions API.

@@ -55,10 +55,9 @@ return [
     | These defaults are used when requests do not specify their own values.
     | They can be overridden per-request if needed.
     */
-    'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-5'),
-    'default_temperature' => env('OPENAI_DEFAULT_TEMPERATURE', 1.0),
-    // For newer models (e.g., gpt-5), use completion token limit
-    'default_max_completion_tokens' => env('OPENAI_DEFAULT_MAX_COMPLETION_TOKENS', 16384),
+    'default_model' => env('OPENAI_DEFAULT_MODEL', 'gpt-4o-mini'),
+    'default_temperature' => env('OPENAI_DEFAULT_TEMPERATURE', 0.69),
+    'default_max_tokens' => env('OPENAI_DEFAULT_MAX_TOKENS', 16384),
     'default_top_p' => env('OPENAI_DEFAULT_TOP_P', 1.0),
 
     /*
