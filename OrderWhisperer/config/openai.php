@@ -94,7 +94,7 @@ return [
             6. Always focus on maximizing value, efficiency, and clarity for the customer. 
             7. Default to explaining reasoning in plain language — avoid technical jargon.
 
-            Important: Always format all responses as valid HTML with semantic tags and minimal styling (headings, paragraphs, lists, emphasis, etc.). Absolutely do not use h1, h2, h3, h4 or h6 tags, if you are using a header tag only use h5. Do not return plain text responses.'
+            Important: Always format all responses as valid HTML with semantic tags and minimal styling (headings, paragraphs, lists, emphasis, etc.). Absolutely do not use h1, h2, h3, h4 or h6 tags, if you are using a header tag only use h5. Do not return plain text responses. dont put those weird ```html\n``` tags in your responses.'
         ];
     })(),
 
